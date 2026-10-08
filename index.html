@@ -1,0 +1,1908 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>アイロンビーズ図案ずかん</title>
+<style>
+  :root{
+    --bg:#fff8f0; --card:#ffffff; --ink:#3d2b1f; --sub:#8a7566;
+    --line:#e8d9c8; --accent:#ff7a59; --accent2:#4fb3d9; --ok:#4caf50;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:"Hiragino Maru Gothic ProN","Yu Gothic UI","Meiryo",sans-serif;
+    background:var(--bg); color:var(--ink); -webkit-text-size-adjust:100%;
+  }
+  header{
+    background:linear-gradient(135deg,#ff9a76,#ff7a59); color:#fff;
+    padding:14px 16px; box-shadow:0 2px 10px rgba(0,0,0,.12);
+    position:sticky; top:0; z-index:50;
+  }
+  header h1{margin:0; font-size:20px; letter-spacing:.04em}
+  header p{margin:2px 0 0; font-size:12px; opacity:.9}
+  nav{display:flex; gap:6px; padding:10px 12px 0; flex-wrap:wrap}
+  nav button{
+    border:2px solid var(--line); background:#fff; color:var(--sub);
+    padding:8px 14px; border-radius:999px; font-size:14px; font-weight:bold;
+    cursor:pointer; font-family:inherit;
+  }
+  nav button.on{background:var(--accent); border-color:var(--accent); color:#fff}
+  main{padding:12px; max-width:1100px; margin:0 auto}
+  .panel{display:none}
+  .panel.on{display:block}
+
+  /* ---- gallery ---- */
+  .filters{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px}
+  .chip{
+    border:1px solid var(--line); background:#fff; border-radius:999px;
+    padding:5px 12px; font-size:13px; cursor:pointer; font-family:inherit; color:var(--sub);
+  }
+  .chip.on{background:var(--accent2); color:#fff; border-color:var(--accent2)}
+  .searchbar{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px}
+  .searchbar input[type=search]{
+    flex:1; min-width:150px; font-family:inherit; font-size:15px; padding:9px 12px;
+    border:2px solid var(--line); border-radius:999px; background:#fff; color:var(--ink);
+  }
+  .count{font-size:12px; color:var(--sub); white-space:nowrap}
+  .grid-cards{
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:8px;
+  }
+  .card{
+    background:var(--card); border-radius:12px; padding:7px;
+    box-shadow:0 2px 8px rgba(0,0,0,.07); cursor:pointer; text-align:center;
+    border:2px solid transparent; transition:transform .1s; position:relative;
+  }
+  .card:active{transform:scale(.97)}
+  .card:hover{border-color:var(--accent)}
+  .card.done{border-color:var(--ok); background:#f4fbf4}
+  .card canvas{width:100%; height:auto; image-rendering:pixelated; border-radius:8px; background:#f4ece4}
+  .card .nm{font-weight:bold; margin-top:5px; font-size:12.5px; line-height:1.3}
+  .card .meta{font-size:10px; color:var(--sub)}
+  /* 「できたよ」チェック */
+  .chk{
+    position:absolute; top:3px; right:3px; width:26px; height:26px; border-radius:50%;
+    border:2px solid var(--line); background:rgba(255,255,255,.92); cursor:pointer;
+    font-size:13px; line-height:1; padding:0; color:#c9bdb1;
+  }
+  .chk.on{background:var(--ok); border-color:var(--ok); color:#fff}
+  .badge{display:inline-block; font-size:10px; padding:1px 7px; border-radius:999px; background:#f1e7dc; color:var(--sub)}
+  .badge.lv1{background:#e3f5e4; color:#357a3a}
+  .badge.lv2{background:#fff3d6; color:#9a7212}
+  .badge.lv3{background:#ffe0e0; color:#a33}
+
+  /* ---- bead grid ---- */
+  .board{overflow:auto; background:#f4ece4; border-radius:10px; padding:8px; border:1px solid var(--line)}
+  .beadgrid{display:grid; gap:0; margin:0 auto; width:max-content}
+  /* 編集中は指でなぞってもページがスクロールしないように */
+  #eboard .beadgrid{touch-action:none; user-select:none; -webkit-user-select:none}
+  .cell{
+    width:var(--cs); height:var(--cs); display:block; position:relative;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);
+  }
+  .cell.e{background:transparent; box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+  .cell .b{
+    position:absolute; inset:8%; border-radius:50%;
+    box-shadow:inset 0 0 0 calc(var(--cs)*0.16) rgba(0,0,0,.14);
+  }
+  .beadgrid.guide .cell.gx{box-shadow:inset -2px 0 0 rgba(255,122,89,.75), inset 0 0 0 1px rgba(0,0,0,.06)}
+  .beadgrid.guide .cell.gy{box-shadow:inset 0 -2px 0 rgba(255,122,89,.75), inset 0 0 0 1px rgba(0,0,0,.06)}
+  .beadgrid.guide .cell.gx.gy{box-shadow:inset -2px -2px 0 rgba(255,122,89,.75), inset 0 0 0 1px rgba(0,0,0,.06)}
+
+  /* ---- detail modal ---- */
+  .modal{
+    position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:100;
+    display:none; align-items:flex-start; justify-content:center; overflow:auto; padding:16px;
+  }
+  .modal.on{display:flex}
+  .sheet{
+    background:#fff; border-radius:var(--radius); max-width:860px; width:100%;
+    padding:16px; box-shadow:0 10px 40px rgba(0,0,0,.25);
+  }
+  .sheet h2{margin:0 0 2px; font-size:20px}
+  .rowbar{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:10px 0}
+  .btn{
+    border:none; background:var(--accent); color:#fff; padding:9px 16px;
+    border-radius:10px; font-weight:bold; cursor:pointer; font-family:inherit; font-size:14px;
+  }
+  .btn.sub{background:#fff; color:var(--sub); border:2px solid var(--line)}
+  .btn.blue{background:var(--accent2)}
+  .btn.green{background:var(--ok)}
+  .btn.danger{background:#fff; color:#c0392b; border:2px solid #f3c9c3}
+  .btn:disabled{opacity:.45; cursor:not-allowed}
+  .legend{display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:6px; margin-top:10px}
+  .legend div{display:flex; align-items:center; gap:7px; font-size:13px; background:#faf5ef; padding:5px 8px; border-radius:8px}
+  .sw{width:18px; height:18px; border-radius:50%; box-shadow:inset 0 0 0 3px rgba(0,0,0,.12); flex:none}
+  .total{font-size:13px; color:var(--sub); margin-top:8px}
+
+  /* ---- editor ---- */
+  .editwrap{display:grid; grid-template-columns:1fr; gap:12px}
+  .tools{display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+  .tool{border:2px solid var(--line); background:#fff; border-radius:10px; padding:7px 11px; cursor:pointer; font-family:inherit; font-size:14px}
+  .tool.on{background:var(--accent2); color:#fff; border-color:var(--accent2)}
+  .palette{display:flex; flex-wrap:wrap; gap:5px; margin:8px 0}
+  .pchip{
+    width:30px; height:30px; border-radius:50%; cursor:pointer; border:3px solid #fff;
+    box-shadow:0 0 0 1px var(--line); position:relative;
+  }
+  .pchip.on{box-shadow:0 0 0 3px var(--accent)}
+  .pchip.er{background:#fff; display:flex; align-items:center; justify-content:center; font-size:14px}
+  label.inl{font-size:13px; color:var(--sub); display:flex; gap:5px; align-items:center}
+  input[type=number],input[type=text],select{
+    font-family:inherit; font-size:14px; padding:6px 8px; border:2px solid var(--line);
+    border-radius:8px; background:#fff; color:var(--ink);
+  }
+  input[type=number]{width:70px}
+  .hint{font-size:12px; color:var(--sub); line-height:1.6; background:#fdf6ee; padding:10px; border-radius:10px; border:1px dashed var(--line)}
+  .empty{text-align:center; color:var(--sub); padding:30px 10px; font-size:14px}
+  .drop{
+    border:3px dashed var(--line); border-radius:var(--radius); background:#fff;
+    padding:18px 12px; text-align:center; color:var(--sub); font-size:14px; margin-bottom:10px;
+  }
+  .drop.over{border-color:var(--accent2); background:#eefaff}
+
+  /* ---- print ---- */
+  @media print{
+    header,nav,.filters,.rowbar,.hint,.modal{display:none !important}
+    .modal.on{display:block !important; position:static; background:#fff; padding:0}
+    .modal.on .rowbar{display:none !important}
+    .sheet{box-shadow:none; max-width:none}
+    body{background:#fff}
+    .board{border:none; background:#fff; overflow:visible}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🧩 アイロンビーズ図案ずかん</h1>
+  <p>図案を見る・自分でつくる・写真から図案にする</p>
+</header>
+
+<nav>
+  <button class="on" data-tab="gallery">📖 ずかん</button>
+  <button data-tab="editor">✏️ つくる</button>
+  <button data-tab="photo">📷 しゃしんから</button>
+  <button data-tab="data">💾 データ</button>
+</nav>
+
+<main>
+  <!-- ============ GALLERY ============ -->
+  <section class="panel on" id="p-gallery">
+    <div class="searchbar">
+      <input type="search" id="q" placeholder="🔍 名まえでさがす（れい：ねこ）">
+      <button class="chip" id="fdone">✅ できたよ だけ</button>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="filters" id="filters"></div>
+    <div class="grid-cards" id="cards"></div>
+  </section>
+
+  <!-- ============ EDITOR ============ -->
+  <section class="panel" id="p-editor">
+    <div class="hint">
+      色をえらんで、マスをクリック（スマホはなぞる）でぬれます。できたら「保存」でずかんに追加されます。
+    </div>
+    <div class="rowbar">
+      <label class="inl">よこ <input type="number" id="ew" value="16" min="4" max="58"></label>
+      <label class="inl">たて <input type="number" id="eh" value="16" min="4" max="58"></label>
+      <button class="btn sub" id="resize">サイズ変更</button>
+      <button class="btn sub" id="clear">ぜんぶ消す</button>
+      <button class="btn sub" id="undo">↩ もどす</button>
+    </div>
+    <div class="tools">
+      <button class="tool on" data-tool="pen">✏️ ペン</button>
+      <button class="tool" data-tool="erase">🧽 消しゴム</button>
+      <button class="tool" data-tool="pick">💧 スポイト</button>
+      <button class="tool" data-tool="fill">🪣 ぬりつぶし</button>
+      <label class="inl" style="margin-left:auto">
+        <input type="checkbox" id="eguide" checked> 5マス線
+      </label>
+    </div>
+    <div class="palette" id="palette"></div>
+    <div class="board" id="eboard"></div>
+    <div class="rowbar">
+      <input type="text" id="ename" placeholder="図案の名まえ" style="flex:1; min-width:140px">
+      <select id="ecat">
+        <option value="オリジナル">オリジナル</option>
+        <option value="どうぶつ">どうぶつ</option>
+        <option value="たべもの">たべもの</option>
+        <option value="きごう">きごう</option>
+        <option value="キャラ">キャラ</option>
+      </select>
+      <button class="btn green" id="save">💾 保存する</button>
+    </div>
+    <div class="legend" id="elegend"></div>
+  </section>
+
+  <!-- ============ PHOTO ============ -->
+  <section class="panel" id="p-photo">
+    <div class="hint">
+      すきなキャラクターの図案は、<b>手もちの画像をここに入れて</b>作ります。<br>
+      コツ：<b>りんかくがはっきりした絵</b>や<b>背景が白い絵</b>がきれいに出ます。サイズは 16〜29 マスがおすすめ。
+    </div>
+    <div class="drop" id="pdrop">
+      <div style="font-size:30px">🖼️</div>
+      <div><b>ここに画像をドラッグ</b> ／ <b>Ctrl+V ではりつけ</b></div>
+      <input type="file" id="pfile" accept="image/*" style="margin-top:8px">
+    </div>
+    <div class="rowbar">
+      <span class="inl">サイズ</span>
+      <button class="tool psz" data-w="16">16</button>
+      <button class="tool psz on" data-w="24">24</button>
+      <button class="tool psz" data-w="29">29</button>
+      <button class="tool psz" data-w="40">40</button>
+      <label class="inl">よこマス <input type="number" id="pw" value="24" min="8" max="58"></label>
+      <label class="inl">つかう色の数 <input type="number" id="pk" value="8" min="2" max="24"></label>
+    </div>
+    <div class="rowbar">
+      <label class="inl"><input type="checkbox" id="pbg" checked> 白い背景をぬく</label>
+      <label class="inl"><input type="checkbox" id="pline"> 黒でふちどり（キャラ向け）</label>
+      <button class="btn blue" id="pgo" disabled>へんかんする</button>
+    </div>
+    <div class="board" id="pboard"><div class="empty">画像をえらんでください</div></div>
+    <div class="rowbar">
+      <button class="btn sub" id="ptoedit" disabled>✏️ つくるタブで直す</button>
+      <input type="text" id="pname" placeholder="図案の名まえ" style="flex:1; min-width:140px">
+      <button class="btn green" id="psave" disabled>💾 保存する</button>
+    </div>
+    <div class="legend" id="plegend"></div>
+  </section>
+
+  <!-- ============ DATA ============ -->
+  <section class="panel" id="p-data">
+    <div class="hint">自分でつくった図案はこの端末（ブラウザ）に保存されます。バックアップや他の端末に移すときは書き出し／読み込みを使ってください。</div>
+    <div class="rowbar">
+      <button class="btn blue" id="export">📤 書き出す（JSON）</button>
+      <button class="btn sub" id="importbtn">📥 読み込む</button>
+      <input type="file" id="importfile" accept="application/json" style="display:none">
+    </div>
+    <div id="mylist"></div>
+  </section>
+</main>
+
+<!-- ============ DETAIL MODAL ============ -->
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h2 id="d-name">—</h2>
+    <div id="d-meta" class="total"></div>
+    <div class="rowbar">
+      <button class="btn sub" id="d-close">✕ とじる</button>
+      <button class="btn sub" id="d-zoomout">➖</button>
+      <button class="btn sub" id="d-zoomin">➕</button>
+      <label class="inl"><input type="checkbox" id="d-guide" checked> 5マス線</label>
+      <button class="btn blue" id="d-print">🖨 印刷</button>
+      <button class="btn green" id="d-done">✓ できたよ</button>
+      <button class="btn" id="d-copy">✏️ これをもとに作る</button>
+      <button class="btn danger" id="d-del" style="display:none">🗑 削除</button>
+    </div>
+    <div class="board" id="d-board"></div>
+    <h3 style="font-size:15px; margin:14px 0 0">つかうビーズ</h3>
+    <div class="legend" id="d-legend"></div>
+    <div class="total" id="d-total"></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   パレット（ハマビーズ／パーラービーズ風 24色）
+   ========================================================= */
+const PALETTE = [
+  {k:'W', n:'ホワイト',       c:'#ffffff'},
+  {k:'A', n:'ライトグレー',   c:'#d6d6d6'},
+  {k:'a', n:'グレー',         c:'#808a90'},
+  {k:'K', n:'ブラック',       c:'#2b2b2b'},
+  {k:'R', n:'レッド',         c:'#e4202e'},
+  {k:'r', n:'ダークレッド',   c:'#8c1a26'},
+  {k:'O', n:'オレンジ',       c:'#ff7a1a'},
+  {k:'o', n:'ライトオレンジ', c:'#ffb347'},
+  {k:'Y', n:'イエロー',       c:'#ffe01a'},
+  {k:'y', n:'クリーム',       c:'#fff3a8'},
+  {k:'G', n:'グリーン',       c:'#2eb44a'},
+  {k:'g', n:'ダークグリーン', c:'#176b2c'},
+  {k:'l', n:'ライトグリーン', c:'#9ed96b'},
+  {k:'B', n:'ブルー',         c:'#1f6fd0'},
+  {k:'b', n:'ネイビー',       c:'#123c75'},
+  {k:'C', n:'ライトブルー',   c:'#6fc7e8'},
+  {k:'P', n:'ピンク',         c:'#f06eb0'},
+  {k:'p', n:'ライトピンク',   c:'#ffc0d4'},
+  {k:'U', n:'パープル',       c:'#8b4fc0'},
+  {k:'u', n:'ラベンダー',     c:'#d4b3e8'},
+  {k:'N', n:'ブラウン',       c:'#8a5a2b'},
+  {k:'n', n:'ライトブラウン', c:'#c89a6b'},
+  {k:'S', n:'はだいろ',       c:'#f7d9b6'},
+  {k:'D', n:'ゴールド',       c:'#d4af37'},
+];
+const PK = {}; PALETTE.forEach(p=>PK[p.k]=p);
+const colorOf = k => (PK[k] ? PK[k].c : null);
+const nameOf  = k => (PK[k] ? PK[k].n : '?');
+
+/* =========================================================
+   内蔵図案（オリジナルデザイン・16x16）
+   ========================================================= */
+const BUILTIN = [
+{id:'cat', name:'ねこ', cat:'どうぶつ', rows:[
+"................",
+"..OO........OO..",
+"..OOO......OOO..",
+"..OOOO....OOOO..",
+"..OOOOOOOOOOOO..",
+".OOOOOOOOOOOOOO.",
+".OOOOOOOOOOOOOO.",
+".OOKKOOOOOOKKOO.",
+".OOKKOOOOOOKKOO.",
+".OOOOOOOOOOOOOO.",
+".OOOOOOPPOOOOOO.",
+".OOOOOOPPOOOOOO.",
+".OOOOKOOOOKOOOO.",
+"..OOOOKKKKOOOO..",
+"..OOOOOOOOOOOO..",
+"...OOOOOOOOOO..."]},
+
+{id:'dog', name:'いぬ', cat:'どうぶつ', rows:[
+"................",
+"...NN......NN...",
+"..NNNN....NNNN..",
+"..NNNNNNNNNNNN..",
+".NNNNNNNNNNNNNN.",
+".NNWWNNNNNNWWNN.",
+".NNWKWNNNNWKWNN.",
+".NNWWNNNNNNWWNN.",
+".NNNNNNNNNNNNNN.",
+".NNNNWWWWWWNNNN.",
+".NNNWWKKKKWWNNN.",
+".NNNWWWKKWWWNNN.",
+"..NNWWWWWWWWNN..",
+"..NNNWWWWWWNNN..",
+"...NNNNNNNNNN...",
+"................"]},
+
+{id:'rabbit', name:'うさぎ', cat:'どうぶつ', rows:[
+"....W......W....",
+"...WPW....WPW...",
+"...WPW....WPW...",
+"...WPW....WPW...",
+"....WW....WW....",
+"...WWWWWWWWWW...",
+"..WWWWWWWWWWWW..",
+"..WWKKWWWWKKWW..",
+"..WWKKWWWWKKWW..",
+"..WWWWWPPWWWWW..",
+"..WWWWWPPWWWWW..",
+"..WWWWKWWKWWWW..",
+"...WWWWKKWWWWW..",
+"...WWWWWWWWWWW..",
+"....WWWWWWWWW...",
+"................"]},
+
+{id:'penguin', name:'ぺんぎん', cat:'どうぶつ', rows:[
+"................",
+".....KKKKKK.....",
+"....KKKKKKKK....",
+"....KKWKKWKK....",
+"....KKKKKKKK....",
+".....KKOOKK.....",
+"....KKKKKKKK....",
+"...KKKWWWWKKK...",
+"..KKKWWWWWWKKK..",
+"..KKKWWWWWWKKK..",
+"..KKKWWWWWWKKK..",
+"..KKKWWWWWWKKK..",
+"...KKWWWWWWKK...",
+"....KKWWWWKK....",
+".....OOO.OOO....",
+"................"]},
+
+{id:'bear', name:'くま', cat:'どうぶつ', rows:[
+"................",
+"..NNN......NNN..",
+".NNNNN....NNNNN.",
+".NNnNN....NNnNN.",
+".NNNNNNNNNNNNNN.",
+"NNNNNNNNNNNNNNNN",
+"NNNNNNNNNNNNNNNN",
+"NNKKNNNNNNNNKKNN",
+"NNKKNNNNNNNNKKNN",
+"NNNNNNNNNNNNNNNN",
+"NNNNNnnnnnnNNNNN",
+".NNNNnnKKnnNNNN.",
+".NNNNnnnnnnNNNN.",
+"..NNNNnnnnNNNN..",
+"...NNNNNNNNNN...",
+"................"]},
+
+{id:'frog', name:'かえる', cat:'どうぶつ', rows:[
+"................",
+"..GGG......GGG..",
+".GWWWG....GWWWG.",
+".GWKWG....GWKWG.",
+".GWWWG....GWWWG.",
+"..GGGGGGGGGGGG..",
+".GGGGGGGGGGGGGG.",
+".GGGGGGGGGGGGGG.",
+".GGGGKKKKKKGGGG.",
+".GGGGGKKKKGGGGG.",
+"..GGGGGGGGGGGG..",
+"...GGGGGGGGGG...",
+"..GG.GGGGGG.GG..",
+".GGG..GGGG..GGG.",
+"................",
+"................"]},
+
+{id:'butterfly', name:'ちょうちょ', cat:'どうぶつ', rows:[
+"................",
+"..UUU......UUU..",
+".UUUUU....UUUUU.",
+"UUUUUUU..UUUUUUU",
+"UUUPPUU..UUPPUUU",
+"UUUPPUUKKUUPPUUU",
+".UUUUUUKKUUUUUU.",
+"..UUUUUKKUUUUU..",
+"...UUUUKKUUUU...",
+"..PPPUUKKUUPPP..",
+".PPPPPUKKUPPPPP.",
+".PPPPPUKKUPPPPP.",
+"..PPPPUKKUPPPP..",
+"...PPP.KK.PPP...",
+"................",
+"................"]},
+
+{id:'strawberry', name:'いちご', cat:'たべもの', rows:[
+"................",
+".......GG.......",
+"....GGGGGGGG....",
+"...GGGRRRRGGG...",
+"....GRRRRRRG....",
+"...RRRRRRRRRR...",
+"..RRYRRRRYRRRR..",
+"..RRRRYRRRRRYR..",
+"..RRRRRRRRRRRR..",
+"..RRYRRRRYRRRR..",
+"...RRRRYRRRRR...",
+"...RRRRRRRRRR...",
+"....RRYRRRRR....",
+".....RRRRRR.....",
+"......RRRR......",
+".......RR......."]},
+
+{id:'mushroom', name:'きのこ', cat:'たべもの', rows:[
+"................",
+".....RRRRRR.....",
+"...RRRRRRRRRR...",
+"..RRRWWRRRWWRR..",
+"..RRRWWRRRWWRR..",
+".RRRRRRRRRRRRRR.",
+".RRWWRRRRRRWWRR.",
+".RRWWRRRRRRWWRR.",
+".RRRRRRRRRRRRRR.",
+"..RRRRRRRRRRRR..",
+".....WWWWWW.....",
+".....WKWWKW.....",
+".....WWWWWW.....",
+".....WWWWWW.....",
+"......WWWW......",
+"................"]},
+
+{id:'heart', name:'ハート', cat:'きごう', rows:[
+"................",
+"...PPPP..PPPP...",
+"..PPPPPPPPPPPP..",
+".PPWWPPPPPPPPPP.",
+".PPWWPPPPPPPPPP.",
+".PPPPPPPPPPPPPP.",
+".PPPPPPPPPPPPPP.",
+"..PPPPPPPPPPPP..",
+"..PPPPPPPPPPPP..",
+"...PPPPPPPPPP...",
+"....PPPPPPPP....",
+".....PPPPPP.....",
+"......PPPP......",
+".......PP.......",
+"................",
+"................"]},
+
+{id:'star', name:'ほし', cat:'きごう', rows:[
+"................",
+".......YY.......",
+".......YY.......",
+"......YYYY......",
+"......YYYY......",
+".YYYYYYYYYYYYYY.",
+".YYYYYYYYYYYYYY.",
+"..YYYYYYYYYYYY..",
+"...YYYYYYYYYY...",
+"...YYYYYYYYYY...",
+"..YYYYYYYYYYYY..",
+"..YYYY....YYYY..",
+".YYYY......YYYY.",
+".YYY........YYY.",
+"................",
+"................"]},
+
+{id:'panda', name:'ぱんだ', cat:'どうぶつ', rows:[
+"................",
+"..KKK......KKK..",
+".KKKKK....KKKKK.",
+".KKKKK....KKKKK.",
+"..WWWWWWWWWWWW..",
+".WWWWWWWWWWWWWW.",
+".WWKKWWWWWWKKWW.",
+".WWKKWWWWWWKKWW.",
+".WWKKWWWWWWKKWW.",
+".WWWWWWWWWWWWWW.",
+".WWWWWWKKWWWWWW.",
+".WWWWWKKKKWWWWW.",
+"..WWWWWWWWWWWW..",
+"..WWWWWWWWWWWW..",
+"...WWWWWWWWWW...",
+"................"]},
+
+{id:'chick', name:'ひよこ', cat:'どうぶつ', rows:[
+"................",
+".......YY.......",
+"......YYYY......",
+".....YYYYYY.....",
+"....YYYYYYYY....",
+"...YYYYYYYYYY...",
+"..YYYKYYYYKYYY..",
+"..YYYKYYYYKYYY..",
+"..YYYYYOOYYYYY..",
+"..YYYYYOOYYYYY..",
+"..YYYYYYYYYYYY..",
+"...YYYYYYYYYY...",
+"....YYYYYYYY....",
+".....OO..OO.....",
+".....OO..OO.....",
+"................"]},
+
+{id:'pig', name:'ぶた', cat:'どうぶつ', rows:[
+"................",
+"..PP........PP..",
+".PPPP......PPPP.",
+".PPPPPPPPPPPPPP.",
+"PPPPPPPPPPPPPPPP",
+"PPKKPPPPPPPPKKPP",
+"PPKKPPPPPPPPKKPP",
+"PPPPPPPPPPPPPPPP",
+"PPPPPpppppPPPPPP",
+"PPPPPpKpKpPPPPPP",
+"PPPPPpppppPPPPPP",
+"PPPPPPPPPPPPPPPP",
+".PPPPPPPPPPPPPP.",
+"..PPPPPPPPPPPP..",
+"...PPPPPPPPPP...",
+"................"]},
+
+{id:'mouse', name:'ねずみ', cat:'どうぶつ', rows:[
+"................",
+"..AAA......AAA..",
+".APPPA....APPPA.",
+".APPPA....APPPA.",
+".AAAAAAAAAAAAAA.",
+".AAAAAAAAAAAAAA.",
+".AAKKAAAAAAKKAA.",
+".AAKKAAAAAAKKAA.",
+".AAAAAAAAAAAAAA.",
+".AAAAAAPPAAAAAA.",
+"..AAAAAPPAAAAA..",
+"..AAAAAAAAAAAA..",
+"...AAAAAAAAAA...",
+"....AAAAAAAA....",
+"................",
+"................"]},
+
+{id:'dino', name:'きょうりゅう', cat:'どうぶつ', rows:[
+"................",
+"............GG..",
+"..........GGGG..",
+".........GGGGGG.",
+".........GGKGGG.",
+".........GGGGGG.",
+"..GGGGGGGGGGGG..",
+".GGGGGGGGGGGGG..",
+"GGGGGGGGGGGGGG..",
+"GGGGGGGGGGGGG...",
+".GGGGGGGGGGG....",
+"..GGG..GGGG.....",
+"..GG....GGG.....",
+"..GG....GGG.....",
+"................",
+"................"]},
+
+{id:'unicorn', name:'ゆにこーん', cat:'キャラ', rows:[
+"................",
+"........Y.......",
+".......YY.......",
+".......Y........",
+".....WWWWWW.....",
+"...uWWWWWWWWu...",
+"...uuWWWWWWuu...",
+"...uWWKWWKWWu...",
+"....WWWWWWWW....",
+"....WWWWWWWW....",
+"....WWWPPWWW....",
+"....WWWWWWWW....",
+".....WWWWWW.....",
+"......WWWW......",
+"................",
+"................"]},
+
+{id:'ghost', name:'おばけ', cat:'キャラ', rows:[
+"................",
+".....WWWWWW.....",
+"...WWWWWWWWWW...",
+"..WWWWWWWWWWWW..",
+"..WWWWWWWWWWWW..",
+"..WWKKWWWWKKWW..",
+"..WWKKWWWWKKWW..",
+"..WWWWWWWWWWWW..",
+"..WWWWWKKWWWWW..",
+"..WWWWWWWWWWWW..",
+"..WWWWWWWWWWWW..",
+"..WWWWWWWWWWWW..",
+"..WWWWWWWWWWWW..",
+"..WW.WW..WW.WW..",
+"..W...W..W...W..",
+"................"]},
+
+{id:'icecream', name:'アイスクリーム', cat:'たべもの', rows:[
+"................",
+"......PPPP......",
+"....PPPPPPPP....",
+"...PPPPPPPPPP...",
+"...PPPPPPPPPP...",
+"....PPPPPPPP....",
+"....RRRRRRRR....",
+".....nnnnnn.....",
+".....nnnnnn.....",
+"......nnnn......",
+"......nnnn......",
+".......nn.......",
+".......nn.......",
+"................",
+"................",
+"................"]},
+
+{id:'donut', name:'ドーナツ', cat:'たべもの', rows:[
+"................",
+".....PPPPPP.....",
+"...PPPPPPPPPP...",
+"..PPYPPPPPPYPP..",
+"..PPPPPPPPPPPP..",
+".PPPPPNNNNPPPPP.",
+".PPYPNNNNNNPPYP.",
+".PPPPNNNNNNPPPP.",
+".PPPPNNNNNNPPPP.",
+".PPPPPNNNNPPPPP.",
+"..PPPPPPPPPPPP..",
+"..PPYPPPPPPYPP..",
+"...PPPPPPPPPP...",
+".....PPPPPP.....",
+"................",
+"................"]},
+
+{id:'rainbow', name:'にじ', cat:'きごう', rows:[
+"................",
+".....RRRRRR.....",
+"...RRRRRRRRRR...",
+"..RROOOOOOOORR..",
+".RROOOOOOOOOORR.",
+".ROOYYYYYYYYOOR.",
+".ROYYYYYYYYYYOR.",
+".RYYGGGGGGGGYYR.",
+".RYGGGGGGGGGGYR.",
+".YGGCCCCCCCCGGY.",
+".YGCCCCCCCCCCGY.",
+".GCCUUUUUUUUCCG.",
+".GCUUUU..UUUUCG.",
+".CUUU......UUUC.",
+".CUU........UUC.",
+"................"]},
+
+{id:'rocket', name:'ロケット', cat:'のりもの', rows:[
+"................",
+".......W........",
+"......WWW.......",
+".....WWWWW......",
+".....WRRRW......",
+".....WRRRW......",
+"....WWCCCWW.....",
+"....WWCCCWW.....",
+"...WWWRRRWWW....",
+"..RWWWRRRWWWR...",
+"..RRWWWWWWWRR...",
+"..RRRWWWWWRRR...",
+".....OOOOO......",
+"......OOO.......",
+".......O........",
+"................"]},
+
+{id:'robot', name:'ロボット', cat:'キャラ', rows:[
+"................",
+"......aaaa......",
+".......aa.......",
+"...aaaaaaaaaa...",
+"...aAAAAAAAAa...",
+"...aACCAACCAa...",
+"...aAAAAAAAAa...",
+"...aAARRRRAAa...",
+"...aaaaaaaaaa...",
+"....aaaaaaaa....",
+"..aaAAAAAAAAaa..",
+"..aaAAAAAAAAaa..",
+"..aaAAAAAAAAaa..",
+"....aaa..aaa....",
+"....aaa..aaa....",
+"................"]},
+{id:'snowman', name:'ゆきだるま', cat:'キャラ', rows:[
+"................",
+".....KKKKKK.....",
+".....KKKKKK.....",
+"...KKKKKKKKKK...",
+".....WWWWWW.....",
+"....WWWWWWWW....",
+"....WKWWWWKW....",
+"....WWWOOWWW....",
+"....WWWWWWWW....",
+".....RRRRRR.....",
+"...WWWWWWWWWW...",
+"..WWWWWKWWWWWW..",
+"..WWWWWWWWWWWW..",
+"..WWWWWKWWWWWW..",
+"...WWWWWWWWWW...",
+"................"]},
+
+{id:'santa', name:'サンタ', cat:'キャラ', rows:[
+"................",
+"......RRRR......",
+".....RRRRRR.....",
+"....RRRRRRRR....",
+"...RRRRRRRRRRW..",
+"...WWWWWWWWWWW..",
+"...WSSSSSSSSW...",
+"...WSKSSSSKSW...",
+"....SSSSSSSS....",
+"....SWWWWWWS....",
+"...WWWWRRWWWW...",
+"...WWWWWWWWWW...",
+"....WWWWWWWW....",
+".....WWWWWW.....",
+"................",
+"................"]},
+
+{id:'reindeer', name:'トナカイ', cat:'キャラ', rows:[
+"................",
+"..n....nn....n..",
+"..n...n..n...n..",
+"..nn.n....n.nn..",
+"...n.n....n.n...",
+"....nn....nn....",
+".....NNNNNN.....",
+"....NNNNNNNN....",
+"....NKNNNNKN....",
+"....NNNNNNNN....",
+"....NNNRRNNN....",
+".....NNRRNN.....",
+"......NNNN......",
+"................",
+"................",
+"................"]},
+
+{id:'witch', name:'まじょ', cat:'キャラ', rows:[
+"................",
+".......K........",
+"......KKK.......",
+".....KKKKK......",
+"....KKKKKKK.....",
+"...KKKKKKKKK....",
+"..KKKKKKKKKKK...",
+".....SSSSSS.....",
+"....SSSSSSSS....",
+"....SKSSSSKS....",
+"....SSSPPSSS....",
+".....SSSSSS.....",
+"...UUUUUUUUUU...",
+"..UUUUUUUUUUUU..",
+"..UUUUUUUUUUUU..",
+"...UUUUUUUUUU..."]},
+
+{id:'ninja', name:'にんじゃ', cat:'キャラ', rows:[
+"................",
+".....KKKKKK.....",
+"....KKKKKKKK....",
+"....KKKKKKKK....",
+"....SSSSSSSS....",
+"....SKSSSSKS....",
+"....SSSSSSSS....",
+"....KKKKKKKK....",
+"...KKKKKKKKKK...",
+"..KKKKKKKKKKKK..",
+"..KKKKKKKKKKKK..",
+"..KKKKKKKKKKKK..",
+"...KKKK..KKKK...",
+"...KKK....KKK...",
+"...KKK....KKK...",
+"................"]},
+
+{id:'pirate', name:'かいぞく', cat:'キャラ', rows:[
+"................",
+"....KKKKKKKK....",
+"...KKKKKKKKKK...",
+"...KKWKKWKKKK...",
+"....SSSSSSSS....",
+"....SKSSSSKS....",
+"....SSSSSSSS....",
+"....SSKKKKSS....",
+".....SSSSSS.....",
+"...RRRRRRRRRR...",
+"..RRWWWWWWWWRR..",
+"..RRRRRRRRRRRR..",
+"..RRRRRRRRRRRR..",
+"...RRRRRRRRRR...",
+"................",
+"................"]},
+
+{id:'alien', name:'うちゅうじん', cat:'キャラ', rows:[
+"................",
+".......ll.......",
+"......l..l......",
+".....llllll.....",
+"....llllllll....",
+"...llllllllll...",
+"...lKKKllKKKl...",
+"...lKKKllKKKl...",
+"...llllllllll...",
+"...llllllllll...",
+"....llKKKKll....",
+".....llllll.....",
+"......llll......",
+".....l....l.....",
+"....ll....ll....",
+"................"]},
+
+{id:'dragon', name:'ドラゴン', cat:'キャラ', rows:[
+"................",
+"...g........g...",
+"...gg......gg...",
+"..gGGGGGGGGGGg..",
+"..GGGGGGGGGGGG..",
+"..GGKKGGGGKKGG..",
+"..GGKKGGGGKKGG..",
+"..GGGGGGGGGGGG..",
+"..GGGyyyyyyGGG..",
+"..GGGyRRRRyGGG..",
+"...GGyyyyyyGG...",
+"...GGGGGGGGGG...",
+"....GGG..GGG....",
+".....G....G.....",
+"................",
+"................"]},
+
+{id:'teru', name:'てるてるぼうず', cat:'キャラ', rows:[
+"................",
+"......WWWW......",
+".....WWWWWW.....",
+"....WWWWWWWW....",
+"....WWWWWWWW....",
+"....WKWWWWKW....",
+"....WWWWWWWW....",
+"....WWWKKWWW....",
+".....WWWWWW.....",
+"....RRRRRRRR....",
+"...WWWWWWWWWW...",
+"..WWWWWWWWWWWW..",
+"..WWWWWWWWWWWW..",
+".WWWWWWWWWWWWWW.",
+".W.W.W.W.W.W.WW.",
+"................"]},
+
+{id:'daruma', name:'だるま', cat:'キャラ', rows:[
+"................",
+".....RRRRRR.....",
+"...RRRRRRRRRR...",
+"..RRRRRRRRRRRR..",
+"..RRWWWWWWWWRR..",
+"..RWWKWWWWKWWR..",
+"..RWWWWWWWWWWR..",
+"..RWWWWKKWWWWR..",
+"..RWWWWWWWWWWR..",
+"..RRWWWWWWWWRR..",
+".RRRRRRRRRRRRRR.",
+".RRRRRRRRRRRRRR.",
+".RRRRRRRRRRRRRR.",
+"..RRRRRRRRRRRR..",
+"...RRRRRRRRRR...",
+"................"]},
+
+{id:'oni', name:'おに', cat:'キャラ', rows:[
+"................",
+"...Y........Y...",
+"...YY......YY...",
+"..KKKKKKKKKKKK..",
+"..KKKKKKKKKKKK..",
+"..RRRRRRRRRRRR..",
+"..RKKRRRRRRKKR..",
+"..RRRRRRRRRRRR..",
+"..RRRRRKKRRRRR..",
+"..RRWWWWWWWWRR..",
+"..RRWKWWWWKWRR..",
+"..RRWWWWWWWWRR..",
+"...RRRRRRRRRR...",
+"....RRRRRRRR....",
+"................",
+"................"]},
+
+{id:'kappa', name:'かっぱ', cat:'キャラ', rows:[
+"................",
+".....YYYYYY.....",
+"....YYYYYYYY....",
+"...GGGGGGGGGG...",
+"..GGGGGGGGGGGG..",
+"..GGWWGGGGWWGG..",
+"..GGWKGGGGKWGG..",
+"..GGGGGGGGGGGG..",
+"..GGGGYYYYGGGG..",
+"..GGGGGGGGGGGG..",
+"...GGGGGGGGGG...",
+"....GGGGGGGG....",
+"...GG.GGGG.GG...",
+"..GG...GG...GG..",
+"................",
+"................"]},
+
+{id:'manekineko', name:'まねきねこ', cat:'キャラ', rows:[
+"................",
+"..WW........WW..",
+"..WWW......WWW..",
+"..WWWWWWWWWWWW..",
+".WWWWWWWWWWWWWW.",
+".WWKWWWWWWWWKWW.",
+".WWKWWWWWWWWKWW.",
+".WWWWWPPWWWWWWW.",
+".WWWWWWWWWWWWWW.",
+"..RRRRRRRRRRRR..",
+".WWWYYYYYYYYWWW.",
+".WWWYRRRRRRYWWW.",
+".WWWYYYYYYYYWWW.",
+"..WWWWWWWWWWWW..",
+"...WWWWWWWWWW...",
+"................"]},
+
+{id:'skeleton', name:'がいこつ', cat:'キャラ', rows:[
+"................",
+".....WWWWWW.....",
+"...WWWWWWWWWW...",
+"..WWWWWWWWWWWW..",
+"..WWKKWWWWKKWW..",
+"..WWKKWWWWKKWW..",
+"..WWWWWWWWWWWW..",
+"..WWWWWKKWWWWW..",
+"...WWWKWWKWWW...",
+"....WWWWWWWW....",
+"......WWWW......",
+"...WWWWWWWWWW...",
+"..WW.WWWWWW.WW..",
+"..WWWWWWWWWWWW..",
+"...WW..WW..WW...",
+"................"]},
+
+{id:'fox', name:'きつね', cat:'どうぶつ', rows:[
+"................",
+"..OO........OO..",
+"..OOO......OOO..",
+"..OOOO....OOOO..",
+"..OOOOOOOOOOOO..",
+".OOOOOOOOOOOOOO.",
+".OOKKOOOOOOKKOO.",
+".OOOOOOOOOOOOOO.",
+".OOOWWWWWWWWOOO.",
+"..OOWWWWWWWWOO..",
+"...WWWWKKWWWWW..",
+"....WWWWWWWWW...",
+".....WWWWWWW....",
+"......WWWWW.....",
+"................",
+"................"]},
+
+{id:'owl', name:'ふくろう', cat:'どうぶつ', rows:[
+"................",
+"..NN........NN..",
+"..NNNNNNNNNNNN..",
+".NNNNNNNNNNNNNN.",
+".NYYYYNNNNYYYYN.",
+".NYKKYNNNNYKKYN.",
+".NYYYYNNNNYYYYN.",
+".NNNNNNOONNNNNN.",
+".NNNNNNOONNNNNN.",
+".NNnnNNNNNNnnNN.",
+".NNNNnnNNnnNNNN.",
+"..NNNNNNNNNNNN..",
+"..NNNNNNNNNNNN..",
+"...NN.NNNN.NN...",
+"....OO....OO....",
+"................"]},
+
+{id:'lion', name:'らいおん', cat:'どうぶつ', rows:[
+"................",
+".....OOOOOO.....",
+"...OOOOOOOOOO...",
+"..OOOOOOOOOOOO..",
+"..OOyyyyyyyyOO..",
+"..OOyKyyyyKyOO..",
+"..OOyyyyyyyyOO..",
+"..OOyyyNNyyyOO..",
+"..OOyyNNNNyyOO..",
+"..OOyyyyyyyyOO..",
+"..OOOOOOOOOOOO..",
+"...OOOOOOOOOO...",
+".....OOOOOO.....",
+"................",
+"................",
+"................"]},
+
+{id:'fish', name:'さかな', cat:'どうぶつ', rows:[
+"................",
+"................",
+"..........C.....",
+".........CC.....",
+".....OOOOOOCC...",
+"...OOOOOOOOOCC..",
+"..OOOOOOOOOOOCC.",
+".OOKOOYYOOOOOCC.",
+".OOKOOYYOOOOOCC.",
+"..OOOOOOOOOOOCC.",
+"...OOOOOOOOOCC..",
+".....OOOOOOCC...",
+".........CC.....",
+"..........C.....",
+"................",
+"................"]},
+
+{id:'octopus', name:'たこ', cat:'どうぶつ', rows:[
+"................",
+".....RRRRRR.....",
+"...RRRRRRRRRR...",
+"..RRRRRRRRRRRR..",
+"..RRRRRRRRRRRR..",
+"..RRWWRRRRWWRR..",
+"..RRWKRRRRKWRR..",
+"..RRRRRRRRRRRR..",
+"..RRRRRKKRRRRR..",
+"..RRRRRRRRRRRR..",
+"..RRRRRRRRRRRR..",
+"..RR.RR.RR.RR...",
+".RR..RR.RR..RR..",
+".RR..RR.RR..RR..",
+"................",
+"................"]},
+
+{id:'bee', name:'はち', cat:'どうぶつ', rows:[
+"................",
+".......KK.......",
+"......KKKK......",
+"..W...KKKK...W..",
+"..WW..KKKK..WW..",
+"..WWWYYYYYYWWW..",
+"...WWKKKKKKWW...",
+".....YYYYYY.....",
+".....KKKKKK.....",
+".....YYYYYY.....",
+".....KKKKKK.....",
+"......YYYY......",
+".......KK.......",
+"................",
+"................",
+"................"]},
+
+{id:'sushi', name:'すし', cat:'たべもの', rows:[
+"................",
+"................",
+".....OOOOOO.....",
+"...OOOOOOOOOO...",
+"..OOOWOOOWOOOO..",
+"..OOOOOOOOOOOO..",
+".OOOOWOOOWOOOOO.",
+".OOOOOOOOOOOOOO.",
+".WWWWWWWWWWWWWW.",
+".WWWWWWWWWWWWWW.",
+"..WWWWWWWWWWWW..",
+"..WWWWWWWWWWWW..",
+"...WWWWWWWWWW...",
+"................",
+"................",
+"................"]},
+
+{id:'cake', name:'ケーキ', cat:'たべもの', rows:[
+"................",
+".......R........",
+"......RRR.......",
+".....WWWWWW.....",
+"...WWWWWWWWWW...",
+"..WWWWWWWWWWWW..",
+"..yyyyyyyyyyyy..",
+"..yyRRyyyyRRyy..",
+"..yyyyyyyyyyyy..",
+"..WWWWWWWWWWWW..",
+"..yyyyyyyyyyyy..",
+"..yyyyRRRRyyyy..",
+"..yyyyyyyyyyyy..",
+"..AAAAAAAAAAAA..",
+".AAAAAAAAAAAAAA.",
+"................"]},
+
+{id:'cherry', name:'さくらんぼ', cat:'たべもの', rows:[
+"................",
+"..........g.....",
+".........g......",
+"......lllg......",
+".......llg......",
+"........g.......",
+"........g.......",
+".......g.g......",
+"......g...g.....",
+".....RR...RR....",
+"....RRRR.RRRR...",
+"....RRRR.RRRR...",
+"....RRRR.RRRR...",
+".....RR...RR....",
+"................",
+"................"]},
+
+{id:'watermelon', name:'すいか', cat:'たべもの', rows:[
+"................",
+"................",
+"..GGGGGGGGGGGG..",
+".GGGGGGGGGGGGGG.",
+".GRRRRRRRRRRRRG.",
+".GRRRRRRRRRRRRG.",
+".GRRKRRRRRRKRRG.",
+"..RRRRRRRRRRRR..",
+"..RRRRKRRKRRRR..",
+"...RRRRRRRRRR...",
+"...RRRKRRKRRR...",
+"....RRRRRRRR....",
+".....RRRRRR.....",
+"......RRRR......",
+".......RR.......",
+"................"]},
+
+{id:'car', name:'くるま', cat:'のりもの', rows:[
+"................",
+"................",
+".....RRRRRR.....",
+"....RRRRRRRR....",
+"...RCCCRRCCCR...",
+"...RCCCRRCCCR...",
+"..RRRRRRRRRRRR..",
+".RRRRRRRRRRRRRR.",
+".RRRRRRRRRRRRRR.",
+".RRRRRRRRRRRRRR.",
+"..KKRRRRRRRRKK..",
+"..KKRRRRRRRRKK..",
+"...KK......KK...",
+"................",
+"................",
+"................"]},
+
+{id:'train', name:'でんしゃ', cat:'のりもの', rows:[
+"................",
+"..GGGGGGGGGGGG..",
+".GGGGGGGGGGGGGG.",
+".GCCGGCCGGCCGGG.",
+".GCCGGCCGGCCGGG.",
+".GGGGGGGGGGGGGG.",
+".GGGGGGGGGGGGGG.",
+".GYYGGGGGGGGYYG.",
+".GGGGGGGGGGGGGG.",
+".KKKKKKKKKKKKKK.",
+"...KK..KK..KK...",
+"...KK..KK..KK...",
+"................",
+"................",
+"................",
+"................"]},
+
+{id:'plane', name:'ひこうき', cat:'のりもの', rows:[
+"................",
+".......BB.......",
+".......BB.......",
+"......BCCB......",
+"......BBBB......",
+".BBBBBBBBBBBBBB.",
+"BBBBBBBBBBBBBBBB",
+".BBBBBBBBBBBBBB.",
+"......BBBB......",
+"......BBBB......",
+"......BBBB......",
+"....BBBBBBBB....",
+"....BBBBBBBB....",
+"......BBBB......",
+"................",
+"................"]},
+];
+
+/* =========================================================
+   ユーティリティ
+   ========================================================= */
+// rows(文字列配列) -> 2次元配列。幅を最大幅にそろえる
+function toGrid(rows){
+  const w = rows.reduce((m,r)=>Math.max(m,r.length),0);
+  return rows.map(r=>{
+    const a = r.split('');
+    while(a.length<w) a.push('.');
+    return a.slice(0,w).map(ch => PK[ch] ? ch : '.');
+  });
+}
+function toRows(grid){ return grid.map(r=>r.join('')); }
+function gridSize(g){ return {w: g[0]?g[0].length:0, h: g.length}; }
+function countBeads(g){
+  const m = new Map();
+  g.forEach(r=>r.forEach(k=>{ if(k!=='.') m.set(k,(m.get(k)||0)+1); }));
+  return [...m.entries()].sort((a,b)=>b[1]-a[1]);
+}
+function totalBeads(g){ return countBeads(g).reduce((s,[,n])=>s+n,0); }
+function levelOf(g){
+  const t = totalBeads(g), cols = countBeads(g).length;
+  if(t<=140 && cols<=4) return {lv:1, t:'かんたん'};
+  if(t<=400 && cols<=8) return {lv:2, t:'ふつう'};
+  return {lv:3, t:'ちょいむず'};
+}
+// 余白をトリミング
+function trim(g){
+  let top=0,bot=g.length-1,left=0,right=(g[0]?g[0].length:0)-1;
+  const rowEmpty=r=>g[r].every(k=>k==='.');
+  const colEmpty=c=>g.every(r=>r[c]==='.');
+  while(top<=bot && rowEmpty(top)) top++;
+  while(bot>=top && rowEmpty(bot)) bot--;
+  if(top>bot) return [['.']];
+  while(left<=right && colEmpty(left)) left++;
+  while(right>=left && colEmpty(right)) right--;
+  return g.slice(top,bot+1).map(r=>r.slice(left,right+1));
+}
+
+/* ---- ビーズグリッド描画 ---- */
+function renderGrid(el, grid, cellSize, guide){
+  const {w,h} = gridSize(grid);
+  el.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'beadgrid' + (guide ? ' guide' : '');
+  wrap.style.gridTemplateColumns = `repeat(${w}, var(--cs))`;
+  wrap.style.setProperty('--cs', cellSize+'px');
+  for(let y=0;y<h;y++){
+    for(let x=0;x<w;x++){
+      const k = grid[y][x];
+      const c = document.createElement('span');
+      let cls = 'cell' + (k==='.' ? ' e' : '');
+      if(guide){
+        if((x+1)%5===0 && x!==w-1) cls += ' gx';
+        if((y+1)%5===0 && y!==h-1) cls += ' gy';
+      }
+      c.className = cls;
+      c.dataset.x = x; c.dataset.y = y;
+      if(k!=='.'){
+        const b = document.createElement('span');
+        b.className = 'b';
+        b.style.background = colorOf(k);
+        c.appendChild(b);
+      }
+      wrap.appendChild(c);
+    }
+  }
+  el.appendChild(wrap);
+  return wrap;
+}
+function renderLegend(el, grid){
+  const list = countBeads(grid);
+  el.innerHTML = list.map(([k,n])=>
+    `<div><span class="sw" style="background:${colorOf(k)}"></span>${nameOf(k)}<b style="margin-left:auto">${n}</b></div>`
+  ).join('') || '<div style="background:none;color:#8a7566">まだビーズがありません</div>';
+}
+// カード用サムネ
+function thumb(canvas, grid){
+  const {w,h} = gridSize(grid);
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,w,h);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    const k = grid[y][x];
+    if(k==='.') continue;
+    ctx.fillStyle = colorOf(k);
+    ctx.fillRect(x,y,1,1);
+  }
+}
+
+/* =========================================================
+   保存データ
+   ========================================================= */
+const LS = 'beadPatterns_v1';
+let memStore = null;        // localStorageが使えない環境のたいひ場所
+let warnedStorage = false;
+function storageOK(){
+  try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); return true; }
+  catch(e){ return false; }
+}
+function warnStorage(){
+  if(warnedStorage) return;
+  warnedStorage = true;
+  const d = document.createElement('div');
+  d.style.cssText = 'background:#fff3cd;border:1px solid #f0d68a;color:#7a5c00;padding:10px;border-radius:10px;margin:10px auto;max-width:1100px;font-size:13px';
+  d.innerHTML = 'このひらき方では図案を端末に保存できません（このタブを閉じると消えます）。'
+    + '保存したいときは「データ」タブの<b>書き出す</b>でファイルにするか、Webサーバー経由で開いてください。';
+  document.querySelector('main').prepend(d);
+}
+function loadMine(){
+  if(memStore) return memStore;
+  try{ return JSON.parse(localStorage.getItem(LS)||'[]'); }
+  catch(e){ memStore = []; warnStorage(); return memStore; }
+}
+function saveMine(arr){
+  if(memStore){ memStore = arr; return; }
+  try{ localStorage.setItem(LS, JSON.stringify(arr)); }
+  catch(e){ memStore = arr; warnStorage(); }
+}
+function allPatterns(){
+  return [
+    ...BUILTIN.map(p=>({...p, mine:false})),
+    ...loadMine().map(p=>({...p, mine:true}))
+  ];
+}
+
+/* =========================================================
+   タブ切り替え
+   ========================================================= */
+document.querySelectorAll('nav button').forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+    document.getElementById('p-'+b.dataset.tab).classList.add('on');
+    if(b.dataset.tab==='data') renderMyList();
+  };
+});
+function gotoTab(name){
+  document.querySelector(`nav button[data-tab="${name}"]`).click();
+}
+
+/* =========================================================
+   ギャラリー
+   ========================================================= */
+let curCat = 'すべて', curQ = '', onlyDone = false;
+
+/* 「できたよ」記録（作った図案のチェック） */
+const LSD = 'beadDone_v1';
+let memDone = null;
+function loadDone(){
+  if(memDone) return memDone;
+  try{ return new Set(JSON.parse(localStorage.getItem(LSD)||'[]')); }
+  catch(e){ memDone = new Set(); return memDone; }
+}
+function saveDone(set){
+  if(memDone){ memDone = set; return; }
+  try{ localStorage.setItem(LSD, JSON.stringify([...set])); }
+  catch(e){ memDone = set; }
+}
+function isDone(id){ return loadDone().has(id); }
+function toggleDone(id){
+  const s = loadDone();
+  s.has(id) ? s.delete(id) : s.add(id);
+  saveDone(s);
+  return s.has(id);
+}
+
+// ひらがな・カタカナの違いを気にせず探せるようにする
+function kana(s){
+  return String(s).toLowerCase().replace(/[ァ-ヶ]/g, c=>String.fromCharCode(c.charCodeAt(0)-0x60));
+}
+function visible(){
+  const q = kana(curQ.trim());
+  return allPatterns().filter(p=>
+    (curCat==='すべて' || p.cat===curCat) &&
+    (!onlyDone || isDone(p.id)) &&
+    (!q || kana(p.name).includes(q) || kana(p.cat).includes(q))
+  );
+}
+function renderFilters(){
+  const all = allPatterns();
+  const cats = ['すべて', ...new Set(all.map(p=>p.cat))];
+  const n = c => c==='すべて' ? all.length : all.filter(p=>p.cat===c).length;
+  document.getElementById('filters').innerHTML =
+    cats.map(c=>`<button class="chip${c===curCat?' on':''}" data-c="${c}">${c} ${n(c)}</button>`).join('');
+  document.querySelectorAll('#filters .chip').forEach(b=>{
+    b.onclick = ()=>{ curCat = b.dataset.c; renderFilters(); renderCards(); };
+  });
+}
+function renderCards(){
+  const list = visible();
+  const box = document.getElementById('cards');
+  const done = loadDone();
+  document.getElementById('count').textContent =
+    `${list.length}件 ／ できたよ ${allPatterns().filter(p=>done.has(p.id)).length}件`;
+  box.innerHTML = '';
+  if(!list.length){
+    box.innerHTML = '<div class="empty">みつかりませんでした</div>';
+    return;
+  }
+  list.forEach(p=>{
+    const g = toGrid(p.rows);
+    const {w,h} = gridSize(g);
+    const card = document.createElement('div');
+    card.className = 'card' + (done.has(p.id) ? ' done' : '');
+    card.innerHTML = `
+      <button class="chk${done.has(p.id)?' on':''}" title="できたよ">✓</button>
+      <canvas></canvas>
+      <div class="nm">${p.mine?'⭐':''}${esc(p.name)}</div>
+      <div class="meta">${w}×${h}／${totalBeads(g)}こ</div>`;
+    thumb(card.querySelector('canvas'), g);
+    card.querySelector('.chk').onclick = e=>{
+      e.stopPropagation();
+      toggleDone(p.id);
+      renderCards();
+    };
+    card.onclick = ()=>openDetail(p);
+    box.appendChild(card);
+  });
+}
+document.getElementById('q').addEventListener('input', e=>{
+  curQ = e.target.value; renderCards();
+});
+document.getElementById('fdone').onclick = ()=>{
+  onlyDone = !onlyDone;
+  document.getElementById('fdone').classList.toggle('on', onlyDone);
+  renderCards();
+};
+function esc(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* =========================================================
+   詳細モーダル
+   ========================================================= */
+let dCur = null, dCell = 22;
+function openDetail(p){
+  dCur = p;
+  const g = toGrid(p.rows);
+  const {w,h} = gridSize(g);
+  document.getElementById('d-name').textContent = p.name;
+  document.getElementById('d-meta').textContent =
+    `${w}×${h}マス ／ ${p.cat} ／ ${levelOf(g).t}`;
+  document.getElementById('d-del').style.display = p.mine ? '' : 'none';
+  syncDoneBtn();
+  dCell = w > 30 ? 14 : (w > 20 ? 18 : 22);
+  drawDetail();
+  document.getElementById('modal').classList.add('on');
+}
+function syncDoneBtn(){
+  const b = document.getElementById('d-done');
+  const on = dCur && isDone(dCur.id);
+  b.textContent = on ? '✓ できたよ ずみ' : '✓ できたよ';
+  b.className = on ? 'btn green' : 'btn sub';
+}
+document.getElementById('d-done').onclick = ()=>{
+  if(!dCur) return;
+  toggleDone(dCur.id);
+  syncDoneBtn();
+  renderCards();
+};
+function drawDetail(){
+  const g = toGrid(dCur.rows);
+  renderGrid(document.getElementById('d-board'), g, dCell, document.getElementById('d-guide').checked);
+  renderLegend(document.getElementById('d-legend'), g);
+  const cnt = countBeads(g);
+  document.getElementById('d-total').textContent =
+    `ぜんぶで ${cnt.reduce((s,[,n])=>s+n,0)} こ（${cnt.length}色）`;
+}
+document.getElementById('d-close').onclick = ()=>document.getElementById('modal').classList.remove('on');
+document.getElementById('modal').onclick = e=>{ if(e.target.id==='modal') e.currentTarget.classList.remove('on'); };
+document.getElementById('d-guide').onchange = drawDetail;
+document.getElementById('d-zoomin').onclick = ()=>{ dCell = Math.min(40, dCell+4); drawDetail(); };
+document.getElementById('d-zoomout').onclick = ()=>{ dCell = Math.max(8, dCell-4); drawDetail(); };
+document.getElementById('d-print').onclick = ()=>window.print();
+document.getElementById('d-copy').onclick = ()=>{
+  loadIntoEditor(toGrid(dCur.rows), dCur.name + ' のコピー', dCur.cat);
+  document.getElementById('modal').classList.remove('on');
+  gotoTab('editor');
+};
+document.getElementById('d-del').onclick = ()=>{
+  if(!dCur.mine) return;
+  if(!confirm(`「${dCur.name}」を削除しますか？`)) return;
+  saveMine(loadMine().filter(p=>p.id!==dCur.id));
+  document.getElementById('modal').classList.remove('on');
+  renderFilters(); renderCards(); renderMyList();
+};
+
+/* =========================================================
+   エディタ
+   ========================================================= */
+let eGrid = Array.from({length:16},()=>Array(16).fill('.'));
+let eColor = 'R', eTool = 'pen', eHist = [];
+const eboard = document.getElementById('eboard');
+
+function renderPalette(){
+  const el = document.getElementById('palette');
+  el.innerHTML =
+    PALETTE.map(p=>`<div class="pchip${p.k===eColor?' on':''}" data-k="${p.k}" style="background:${p.c}" title="${p.n}"></div>`).join('');
+  el.querySelectorAll('.pchip').forEach(c=>{
+    c.onclick = ()=>{ eColor = c.dataset.k; setTool('pen'); renderPalette(); };
+  });
+}
+function setTool(t){
+  eTool = t;
+  document.querySelectorAll('.tool').forEach(b=>b.classList.toggle('on', b.dataset.tool===t));
+}
+document.querySelectorAll('.tool').forEach(b=> b.onclick = ()=>setTool(b.dataset.tool));
+
+function pushHist(){
+  eHist.push(eGrid.map(r=>r.slice()));
+  if(eHist.length>40) eHist.shift();
+}
+function drawEditor(){
+  const cs = gridSize(eGrid).w > 30 ? 14 : (gridSize(eGrid).w > 22 ? 18 : 24);
+  const wrap = renderGrid(eboard, eGrid, cs, document.getElementById('eguide').checked);
+  renderLegend(document.getElementById('elegend'), eGrid);
+  bindPaint(wrap);
+}
+function applyAt(x,y){
+  if(y<0||y>=eGrid.length||x<0||x>=eGrid[0].length) return false;
+  if(eTool==='pick'){
+    if(eGrid[y][x]!=='.'){ eColor = eGrid[y][x]; renderPalette(); setTool('pen'); }
+    return false;
+  }
+  if(eTool==='fill'){ pushHist(); floodFill(x,y, eGrid[y][x], eColor); return true; }
+  const v = (eTool==='erase') ? '.' : eColor;
+  if(eGrid[y][x]===v) return false;
+  eGrid[y][x] = v;
+  return true;
+}
+function floodFill(x,y,from,to){
+  if(from===to) return;
+  const {w,h} = gridSize(eGrid);
+  const st=[[x,y]];
+  while(st.length){
+    const [cx,cy]=st.pop();
+    if(cx<0||cy<0||cx>=w||cy>=h) continue;
+    if(eGrid[cy][cx]!==from) continue;
+    eGrid[cy][cx]=to;
+    st.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]);
+  }
+}
+function paintCellEl(el){
+  const k = eGrid[+el.dataset.y][+el.dataset.x];
+  el.classList.toggle('e', k==='.');
+  el.innerHTML = '';
+  if(k!=='.'){
+    const b = document.createElement('span');
+    b.className='b'; b.style.background = colorOf(k);
+    el.appendChild(b);
+  }
+}
+function bindPaint(wrap){
+  let drawing=false, last=null;
+  const cellAt = (cx,cy)=>{
+    const el = document.elementFromPoint(cx,cy);
+    return (el && el.classList.contains('cell')) ? el :
+           (el && el.parentElement && el.parentElement.classList.contains('cell')) ? el.parentElement : null;
+  };
+  const cellEl = (x,y)=>wrap.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`);
+  const put = (x,y)=>{
+    if(applyAt(x,y)){
+      if(eTool==='fill') drawEditor();
+      else { const el = cellEl(x,y); if(el) paintCellEl(el); }
+      renderLegend(document.getElementById('elegend'), eGrid);
+    }
+  };
+  // 速いドラッグでもマスが飛ばないよう直線補間する
+  const strokeTo = (x,y)=>{
+    if(last && (eTool==='pen'||eTool==='erase')){
+      let [x0,y0]=last;
+      const dx=Math.abs(x-x0), dy=-Math.abs(y-y0);
+      const sx=x0<x?1:-1, sy=y0<y?1:-1;
+      let err=dx+dy;
+      for(let i=0;i<256;i++){
+        if(x0===x && y0===y) break;
+        const e2=2*err;
+        if(e2>=dy){ err+=dy; x0+=sx; }
+        if(e2<=dx){ err+=dx; y0+=sy; }
+        put(x0,y0);
+      }
+    } else put(x,y);
+    last=[x,y];
+  };
+  wrap.addEventListener('pointerdown', e=>{
+    const el = cellAt(e.clientX,e.clientY);
+    if(!el) return;
+    drawing=true; last=null;
+    if(eTool==='pen'||eTool==='erase') pushHist();
+    strokeTo(+el.dataset.x, +el.dataset.y);
+    try{ wrap.setPointerCapture?.(e.pointerId); }catch(_){}
+    e.preventDefault();
+  });
+  wrap.addEventListener('pointermove', e=>{
+    if(!drawing) return;
+    if(eTool!=='pen' && eTool!=='erase') return;
+    const el = cellAt(e.clientX,e.clientY);
+    if(el) strokeTo(+el.dataset.x, +el.dataset.y);
+    e.preventDefault();
+  });
+  const end = ()=>{ drawing=false; last=null; };
+  wrap.addEventListener('pointerup', end);
+  wrap.addEventListener('pointercancel', end);
+  wrap.addEventListener('pointerleave', end);
+}
+document.getElementById('eguide').onchange = drawEditor;
+document.getElementById('resize').onclick = ()=>{
+  const w = Math.max(4, Math.min(58, +document.getElementById('ew').value||16));
+  const h = Math.max(4, Math.min(58, +document.getElementById('eh').value||16));
+  pushHist();
+  const ng = Array.from({length:h},(_,y)=>Array.from({length:w},(_,x)=>
+    (eGrid[y] && eGrid[y][x]) ? eGrid[y][x] : '.'));
+  eGrid = ng; drawEditor();
+};
+document.getElementById('clear').onclick = ()=>{
+  if(!confirm('ぜんぶ消しますか？')) return;
+  pushHist();
+  eGrid = eGrid.map(r=>r.map(()=>'.'));
+  drawEditor();
+};
+document.getElementById('undo').onclick = ()=>{
+  if(!eHist.length) return;
+  eGrid = eHist.pop(); drawEditor();
+};
+function loadIntoEditor(grid, name, cat){
+  pushHist();
+  eGrid = grid.map(r=>r.slice());
+  const {w,h} = gridSize(eGrid);
+  document.getElementById('ew').value = w;
+  document.getElementById('eh').value = h;
+  document.getElementById('ename').value = name || '';
+  if(cat) document.getElementById('ecat').value =
+    [...document.getElementById('ecat').options].some(o=>o.value===cat) ? cat : 'オリジナル';
+  drawEditor();
+}
+document.getElementById('save').onclick = ()=>{
+  const g = trim(eGrid);
+  if(totalBeads(g)===0){ alert('ビーズをおいてから保存してください'); return; }
+  const name = (document.getElementById('ename').value||'').trim() || '無題の図案';
+  const arr = loadMine();
+  arr.push({ id:'u'+Date.now(), name, cat:document.getElementById('ecat').value, rows:toRows(g) });
+  saveMine(arr);
+  renderFilters(); renderCards();
+  alert(`「${name}」を保存しました！ずかんタブで見られます。`);
+};
+
+/* =========================================================
+   写真 → 図案
+   ========================================================= */
+let pImg = null, pGrid = null;
+
+function useImageFile(f, label){
+  if(!f || !/^image\//.test(f.type||'')){ alert('画像ファイルを入れてください'); return; }
+  const img = new Image();
+  img.onload = ()=>{ pImg = img; document.getElementById('pgo').disabled = false; convert(); };
+  img.onerror = ()=>alert('この画像は読み込めませんでした');
+  img.src = URL.createObjectURL(f);
+  const nameEl = document.getElementById('pname');
+  if(!nameEl.value) nameEl.value = (label || f.name || '').replace(/\.[^.]+$/,'') || '図案';
+}
+document.getElementById('pfile').onchange = e=>{
+  if(e.target.files[0]) useImageFile(e.target.files[0]);
+};
+// ドラッグ＆ドロップ
+const pdrop = document.getElementById('pdrop');
+['dragenter','dragover'].forEach(ev=>pdrop.addEventListener(ev, e=>{
+  e.preventDefault(); pdrop.classList.add('over');
+}));
+['dragleave','drop'].forEach(ev=>pdrop.addEventListener(ev, e=>{
+  e.preventDefault(); pdrop.classList.remove('over');
+}));
+pdrop.addEventListener('drop', e=>{
+  const f = e.dataTransfer && e.dataTransfer.files[0];
+  if(f) useImageFile(f);
+});
+// クリップボードから貼りつけ（しゃしんタブを開いているときだけ）
+document.addEventListener('paste', e=>{
+  if(!document.getElementById('p-photo').classList.contains('on')) return;
+  const items = e.clipboardData ? e.clipboardData.items : null;
+  if(!items) return;
+  for(const it of items){
+    if(it.kind==='file' && /^image\//.test(it.type)){
+      useImageFile(it.getAsFile(), 'はりつけた画像');
+      e.preventDefault();
+      return;
+    }
+  }
+});
+// サイズのプリセット
+document.querySelectorAll('.psz').forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll('.psz').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById('pw').value = b.dataset.w;
+    if(pImg) convert();
+  };
+});
+document.getElementById('pgo').onclick = convert;
+
+function nearest(r,g,b,limited){
+  let best=null, bd=1e9;
+  for(const p of (limited||PALETTE)){
+    const pr=parseInt(p.c.slice(1,3),16), pg=parseInt(p.c.slice(3,5),16), pb=parseInt(p.c.slice(5,7),16);
+    // 知覚重みつき距離
+    const d = 2*(r-pr)**2 + 4*(g-pg)**2 + 3*(b-pb)**2;
+    if(d<bd){ bd=d; best=p; }
+  }
+  return best;
+}
+function convert(){
+  if(!pImg) return;
+  const W = Math.max(8, Math.min(58, +document.getElementById('pw').value||24));
+  const H = Math.max(1, Math.round(W * pImg.height / pImg.width));
+  const maxColors = Math.max(2, Math.min(24, +document.getElementById('pk').value||8));
+  const cutBg = document.getElementById('pbg').checked;
+
+  const cv = document.createElement('canvas');
+  cv.width=W; cv.height=H;
+  const ctx = cv.getContext('2d', {willReadFrequently:true});
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(pImg, 0,0, W,H);
+  const d = ctx.getImageData(0,0,W,H).data;
+
+  // 背景ぬき：外周から「白っぽい部分」をたどって消す。
+  // こうすると絵の内側の白は残り、りんかくのフチのゴミだけ消える。
+  const empty = new Uint8Array(W*H);
+  const nearWhite = i => d[i*4]>212 && d[i*4+1]>212 && d[i*4+2]>212;
+  for(let i=0;i<W*H;i++) if(d[i*4+3]<100) empty[i]=1;
+  if(cutBg){
+    const st=[];
+    for(let x=0;x<W;x++){ st.push(x, (H-1)*W+x); }
+    for(let y=0;y<H;y++){ st.push(y*W, y*W+W-1); }
+    while(st.length){
+      const i = st.pop();
+      if(empty[i]) continue;
+      if(!nearWhite(i)) continue;
+      empty[i]=1;
+      const x=i%W, y=(i/W)|0;
+      if(x>0) st.push(i-1);
+      if(x<W-1) st.push(i+1);
+      if(y>0) st.push(i-W);
+      if(y<H-1) st.push(i+W);
+    }
+  }
+
+  // 1周目：全パレットで量子化し、使用頻度の高い色を maxColors 個だけ採用
+  const freq = new Map();
+  const px = [];
+  for(let i=0;i<W*H;i++){
+    if(empty[i]){ px.push(null); continue; }
+    const r=d[i*4], g=d[i*4+1], b=d[i*4+2];
+    const p = nearest(r,g,b);
+    px.push([r,g,b]);
+    freq.set(p.k, (freq.get(p.k)||0)+1);
+  }
+  const keep = [...freq.entries()].sort((a,b)=>b[1]-a[1]).slice(0,maxColors).map(([k])=>PK[k]);
+  if(!keep.length){ alert('色が見つかりませんでした。「白い背景をぬく」をオフにしてみてください'); return; }
+
+  // 2周目：採用色だけで再マッピング
+  let grid = [];
+  for(let y=0;y<H;y++){
+    const row=[];
+    for(let x=0;x<W;x++){
+      const v = px[y*W+x];
+      row.push(v ? nearest(v[0],v[1],v[2],keep).k : '.');
+    }
+    grid.push(row);
+  }
+
+  // ノイズ取り：ほとんど使われていない色（りんかくのギザギザ）を
+  // まわりでいちばん多い色に置きかえる
+  {
+    const cnt = {};
+    grid.forEach(r=>r.forEach(k=>{ if(k!=='.') cnt[k]=(cnt[k]||0)+1; }));
+    const tot = Object.values(cnt).reduce((a,b)=>a+b,0);
+    const rare = new Set(Object.keys(cnt).filter(k=>cnt[k] <= Math.max(2, tot*0.005)));
+    if(rare.size){
+      const src = grid.map(r=>r.slice());
+      for(let y=0;y<grid.length;y++) for(let x=0;x<grid[0].length;x++){
+        if(!rare.has(src[y][x])) continue;
+        const near = {};
+        for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){
+          const r = src[y+dy]; if(!r) continue;
+          const k = r[x+dx];
+          if(k && k!=='.' && !rare.has(k)) near[k]=(near[k]||0)+1;
+        }
+        const best = Object.keys(near).sort((a,b)=>near[b]-near[a])[0];
+        if(best) grid[y][x] = best;
+      }
+    }
+  }
+
+  // 黒でふちどり：絵のまわり1マスを黒にする（キャラものがくっきりする）
+  if(document.getElementById('pline').checked){
+    // 外側に1マスの余白を足してから、ふちを描く
+    const gw = grid[0].length, gh = grid.length;
+    const big = Array.from({length:gh+2},()=>Array(gw+2).fill('.'));
+    for(let y=0;y<gh;y++) for(let x=0;x<gw;x++) big[y+1][x+1] = grid[y][x];
+    const out = big.map(r=>r.slice());
+    for(let y=0;y<big.length;y++) for(let x=0;x<big[0].length;x++){
+      if(big[y][x]!=='.') continue;
+      const near = (big[y-1]&&big[y-1][x]!=='.') || (big[y+1]&&big[y+1][x]!=='.')
+                || big[y][x-1]&&big[y][x-1]!=='.' || big[y][x+1]&&big[y][x+1]!=='.';
+      if(near) out[y][x] = 'K';
+    }
+    grid = out;
+  }
+
+  pGrid = trim(grid);
+  const cs = gridSize(pGrid).w>30 ? 12 : 18;
+  renderGrid(document.getElementById('pboard'), pGrid, cs, true);
+  renderLegend(document.getElementById('plegend'), pGrid);
+  document.getElementById('psave').disabled = false;
+  document.getElementById('ptoedit').disabled = false;
+}
+document.getElementById('ptoedit').onclick = ()=>{
+  if(!pGrid) return;
+  loadIntoEditor(pGrid, (document.getElementById('pname').value||'写真の図案'), 'オリジナル');
+  gotoTab('editor');
+};
+document.getElementById('psave').onclick = ()=>{
+  if(!pGrid) return;
+  const name = (document.getElementById('pname').value||'').trim() || '写真の図案';
+  const arr = loadMine();
+  arr.push({ id:'u'+Date.now(), name, cat:'オリジナル', rows:toRows(pGrid) });
+  saveMine(arr);
+  renderFilters(); renderCards();
+  alert(`「${name}」を保存しました！`);
+};
+
+/* =========================================================
+   データ（書き出し・読み込み・一覧）
+   ========================================================= */
+function renderMyList(){
+  const mine = loadMine();
+  const el = document.getElementById('mylist');
+  if(!mine.length){ el.innerHTML = '<div class="empty">まだ自分の図案はありません</div>'; return; }
+  el.innerHTML = '<div class="grid-cards">' + mine.map((p,i)=>
+    `<div class="card" data-i="${i}"><canvas></canvas><div class="nm">${esc(p.name)}</div>
+     <div class="meta">${toGrid(p.rows)[0].length}×${p.rows.length}</div></div>`).join('') + '</div>';
+  el.querySelectorAll('.card').forEach(c=>{
+    const p = mine[+c.dataset.i];
+    thumb(c.querySelector('canvas'), toGrid(p.rows));
+    c.onclick = ()=>openDetail({...p, mine:true});
+  });
+}
+document.getElementById('export').onclick = ()=>{
+  const data = JSON.stringify({app:'beads-patterns', v:1, patterns:loadMine()}, null, 1);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([data],{type:'application/json'}));
+  a.download = 'bead-patterns.json';
+  a.click();
+};
+document.getElementById('importbtn').onclick = ()=>document.getElementById('importfile').click();
+document.getElementById('importfile').onchange = e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const fr = new FileReader();
+  fr.onload = ()=>{
+    try{
+      const o = JSON.parse(fr.result);
+      const inc = Array.isArray(o) ? o : o.patterns;
+      if(!Array.isArray(inc)) throw 0;
+      const ok = inc.filter(p=>p && p.name && Array.isArray(p.rows))
+                    .map(p=>({id:'u'+Date.now()+Math.random().toString(36).slice(2,6),
+                              name:String(p.name), cat:String(p.cat||'オリジナル'),
+                              rows:p.rows.map(String)}));
+      if(!ok.length) throw 0;
+      saveMine([...loadMine(), ...ok]);
+      renderFilters(); renderCards(); renderMyList();
+      alert(`${ok.length}件 読み込みました`);
+    }catch(err){ alert('読み込めないファイルです'); }
+    e.target.value = '';
+  };
+  fr.readAsText(f);
+};
+
+/* =========================================================
+   起動
+   ========================================================= */
+renderFilters(); renderCards(); renderPalette(); drawEditor();
+</script>
+</body>
+</html>
